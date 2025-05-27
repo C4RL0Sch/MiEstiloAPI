@@ -1,0 +1,6 @@
+@MiEstiloAPI_HostAddress = http://localhost:5286
+
+GET {{MiEstiloAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
