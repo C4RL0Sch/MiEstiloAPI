@@ -75,7 +75,7 @@ namespace MiEstiloAPI.Controllers
 
         // POST: api/Usuarios
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        /*[HttpPost]
         public async Task<ActionResult<Usuario>> PostUsuario(Usuario usuario)
         {
             usuario.FechaCreacion = DateTime.Now;
@@ -83,7 +83,7 @@ namespace MiEstiloAPI.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetUsuario", new { id = usuario.IdUsuario }, usuario);
-        }
+        }*/
 
         // DELETE: api/Usuarios/5
         [HttpDelete("{id}")]

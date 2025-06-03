@@ -26,4 +26,6 @@ public partial class Usuario
     public virtual ICollection<ListasDeseo> ListasDeseos { get; set; } = new List<ListasDeseo>();
 
     public virtual ICollection<Pedido> Pedidos { get; set; } = new List<Pedido>();
+
+    public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 }

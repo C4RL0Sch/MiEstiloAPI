@@ -1,23 +1,20 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.EntityFrameworkCore;
 using MiEstiloAPI.DTOs;
 using MiEstiloAPI.Models;
 using MiEstiloAPI.Services;
-using System;
-using System.IdentityModel.Tokens.Jwt;
 
 namespace MiEstiloAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AdminAuthController : ControllerBase
     {
         private readonly MiEstiloContext _context;
         private readonly JwtService _jwtService;
 
-        public AuthController(MiEstiloContext context, JwtService jwtService)
+        public AdminAuthController(MiEstiloContext context, JwtService jwtService)
         {
             _context = context;
             _jwtService = jwtService;
@@ -35,30 +32,20 @@ namespace MiEstiloAPI.Controllers
                 Email = user.Email,
                 Contraseña = BCrypt.Net.BCrypt.HashPassword(user.Contraseña),
                 Telefono = user.Telefono,
-                Rol = "cliente"
+                Rol = "admin"
             };
 
             _context.Usuarios.Add(usuario);
             await _context.SaveChangesAsync();
 
-            var token = _jwtService.GenerateToken(usuario.IdUsuario.ToString(), usuario.Email, usuario.Rol);
-
-            HttpContext.Response.Cookies.Append("jwt_token", token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true, // solo en HTTPS
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddHours(1)
-            });
-
-            return Ok(new { message = "Registro exitoso"});
+            return Ok(new { message = "Registro exitoso" });
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDTO dto)
         {
             var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == dto.Email);
-            if (usuario == null || !BCrypt.Net.BCrypt.Verify(dto.Contraseña, usuario.Contraseña))
+            if (usuario == null || !BCrypt.Net.BCrypt.Verify(dto.Contraseña, usuario.Contraseña) || usuario.Rol != "admin")
                 return Unauthorized("Credenciales inválidas");
 
             var accesstoken = _jwtService.GenerateToken(usuario.IdUsuario.ToString(), usuario.Email, usuario.Rol);
@@ -72,11 +59,6 @@ namespace MiEstiloAPI.Controllers
             };
 
             _context.RefreshTokens.Add(refreshToken);
-            await _context.SaveChangesAsync();
-
-            var tokens = await _context.RefreshTokens.Where(t=>t.IdUsuario == usuario.IdUsuario && 
-                                                (t.Expira < DateTime.UtcNow || t.Revocado)).ToListAsync();
-            _context.RefreshTokens.RemoveRange(tokens);
             await _context.SaveChangesAsync();
 
             HttpContext.Response.Cookies.Append("jwt_token", accesstoken, new CookieOptions
@@ -95,7 +77,7 @@ namespace MiEstiloAPI.Controllers
                 Expires = refreshToken.Expira
             });
 
-            return Ok(new { message = "Login exitoso"});
+            return Ok(new { message = "Login exitoso" });
         }
 
         [HttpPost("refresh")]
@@ -110,9 +92,6 @@ namespace MiEstiloAPI.Controllers
 
             if (token == null || token.Expira < DateTime.UtcNow)
                 return Unauthorized();
-
-            token.Expira = DateTime.UtcNow.AddDays(1);
-            await _context.SaveChangesAsync();
 
             // Generar nuevo access token
             var newAccessToken = _jwtService.GenerateToken(token.IdUsuario.ToString(), token.IdUsuarioNavigation.Email, token.IdUsuarioNavigation.Rol);
@@ -144,8 +123,20 @@ namespace MiEstiloAPI.Controllers
 
             Response.Cookies.Delete("jwt_token");
             Response.Cookies.Delete("refresh_token");
-
             return Ok(new { message = "Sesión cerrada" });
+
+            /*
+            // Obtener el claim 'sub' (userId)
+            var userId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+            // Obtener el claim 'email'
+            var email = User.FindFirst(JwtRegisteredClaimNames.Email)?.Value;
+
+            return Ok(new
+            {
+                UserId = userId,
+                Email = email
+            });*/
         }
     }
 }

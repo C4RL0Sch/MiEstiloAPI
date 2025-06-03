@@ -47,13 +47,15 @@ public partial class MiEstiloContext : DbContext
 
     public virtual DbSet<ProductoCaracteristica> ProductoCaracteristicas { get; set; }
 
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
     public virtual DbSet<Venta> Ventas { get; set; }
 
-    /*protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=CHARLY\\SQLEXPRESS;Database=MiEstilo;Trusted_Connection=True;TrustServerCertificate=True;");*/
+        => optionsBuilder.UseSqlServer("Server=CHARLY\\SQLEXPRESS;Database=MiEstilo;Trusted_Connection=True;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -428,6 +430,24 @@ public partial class MiEstiloContext : DbContext
                 .HasForeignKey(d => d.IdProducto)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__producto___id_pr__5535A963");
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.IdRToken);
+
+            entity.ToTable("refresh_tokens");
+
+            entity.Property(e => e.IdRToken).HasColumnName("id_rToken");
+            entity.Property(e => e.Expira).HasColumnType("datetime");
+            entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
+            entity.Property(e => e.Token)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.RefreshTokens)
+                .HasForeignKey(d => d.IdUsuario)
+                .HasConstraintName("FK_usuario_token");
         });
 
         modelBuilder.Entity<Usuario>(entity =>

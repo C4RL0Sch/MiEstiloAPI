@@ -24,6 +24,8 @@ builder.Services.AddDbContext<MiEstiloContext>(options => {
     options.UseSqlServer(builder.Configuration.GetConnectionString("MiEstilo"));
 });
 
+builder.Services.AddSingleton<IListaDeseosService>(new ListaDeseosService());
+
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {

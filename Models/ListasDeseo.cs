@@ -13,6 +13,8 @@ public partial class ListasDeseo
 
     public DateTime? FechaAgregado { get; set; }
 
+    public bool? Activo { get; set; }
+
     public virtual Producto? IdProductoNavigation { get; set; }
 
     public virtual Usuario? IdUsuarioNavigation { get; set; }

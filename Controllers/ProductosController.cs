@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiEstiloAPI.DTOs;
 using MiEstiloAPI.Models;
+using MiEstiloAPI.Services;
 
 namespace MiEstiloAPI.Controllers
 {
@@ -15,17 +18,26 @@ namespace MiEstiloAPI.Controllers
     public class ProductosController : ControllerBase
     {
         private readonly MiEstiloContext _context;
+        private readonly IListaDeseosService _listaDeseosService;
 
-        public ProductosController(MiEstiloContext context)
+        public ProductosController(MiEstiloContext context, IListaDeseosService service)
         {
             _context = context;
+            _listaDeseosService = service;
         }
 
         // GET: api/Productos
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductoDTO>>> GetProductos()
         {
+            int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId);
+
+            Console.WriteLine(userId);
+
+            //var userId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
             return await _context.Productos
+                .Include(p=>p.ListasDeseos)
                 .Select(p => new ProductoDTO
                 {
                     IdProducto = p.IdProducto,
@@ -33,6 +45,7 @@ namespace MiEstiloAPI.Controllers
                     Descripcion = p.Descripcion,
                     Precio = p.Precio,
                     ImagenUrl = p.ImagenUrl,
+                    Deseado = _listaDeseosService.isWished(userId, p),
                     FechaCreacion = p.FechaCreacion,
                     IdCategoria = p.IdCategoria,
                     Categoria = new CategoriaDTO

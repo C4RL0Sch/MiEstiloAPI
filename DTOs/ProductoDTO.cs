@@ -16,6 +16,8 @@
 
         public string? ImagenUrl { get; set; }
 
+        public bool? Deseado { get; set; }
+
         public DateTime? FechaCreacion { get; set; }
 
         public CategoriaDTO? Categoria { get; set; }

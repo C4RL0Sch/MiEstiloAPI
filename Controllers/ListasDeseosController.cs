@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -74,9 +77,26 @@ namespace MiEstiloAPI.Controllers
 
         // POST: api/ListasDeseos
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<ListasDeseo>> PostListasDeseo(ListasDeseo ProductoDeseo)
         {
+            // Obtener el claim 'sub' (userId)
+            var userId = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+            var producto = await _context.ListasDeseos.FirstOrDefaultAsync(p=>p.IdUsuario == userId && 
+                                                                    p.IdProducto == ProductoDeseo.IdProducto);
+
+            if (producto != null)
+            {
+                producto.Activo = !(producto.Activo);
+                producto.FechaAgregado = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+                return CreatedAtAction("GetListasDeseo", new { id = ProductoDeseo.IdListaDeseo }, ProductoDeseo);
+            }
+
+            ProductoDeseo.IdUsuario = userId;
             ProductoDeseo.FechaAgregado = DateTime.Now;
 
             _context.ListasDeseos.Add(ProductoDeseo);
